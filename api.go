@@ -8,9 +8,7 @@ import (
 )
 
 type RequestData struct {
-	ContractAddress string   `json:"contract_address"`
-	MethodName      string   `json:"method_name"`
-	MethodArgs      []string `json:"method_args"`
+	Name string `json:"Name"`
 }
 
 func handlePostRequest(w http.ResponseWriter, r *http.Request) {
@@ -21,12 +19,8 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement your logic to interact with the Ethereum smart contract here
-	// For demonstration purposes, we'll just print the received data
 	fmt.Println("Received data:")
-	fmt.Printf("Contract Address: %s\n", requestData.ContractAddress)
-	fmt.Printf("Method Name: %s\n", requestData.MethodName)
-	fmt.Printf("Method Arguments: %v\n", requestData.MethodArgs)
+	fmt.Printf("Name: %s\n", requestData.Name)
 
 	// Send a JSON response
 	response := map[string]string{
@@ -37,7 +31,7 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/your-api-endpoint", handlePostRequest)
+	http.HandleFunc("/email", handlePostRequest)
 
 	port := "8080" // Choose a port number for your API
 	fmt.Printf("Starting server on port %s...\n", port)
