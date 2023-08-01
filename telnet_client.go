@@ -5,48 +5,77 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 )
 
 func main() {
-	// Get the server IP and port from user input
-	fmt.Print("Enter the server IP address: ")
-	serverIP := readInput()
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: go run main.go <domain_name>")
+		os.Exit(1)
+	}
 
-	// Combine the server IP and port to create the address
-	serverAddress := serverIP + ":" + "25"
+	domain := os.Args[1]
 
-	// Connect to the server
-	conn, err := net.Dial("tcp", serverAddress)
+	mxRecords, err := net.LookupMX(domain)
 	if err != nil {
-		fmt.Println("Error connecting to the server:", err)
-		return
+		fmt.Println("Error performing MX record lookup:", err)
+		os.Exit(1)
 	}
-	defer conn.Close()
 
-	fmt.Println("Connected to the server.")
+	if len(mxRecords) == 0 {
+		fmt.Printf("No MX records found for %s\n", domain)
+	} else {
+		// Get the host of the first MX record
+		mailExchange := mxRecords[0].Host
+		fmt.Printf("First MX record for %s\n", mailExchange)
 
-	// Start a loop to read and write data from/to the server
-	go readFromServer(conn)
+		// Combine the server IP and port to create the address
+		serverAddress := mailExchange + ":" + "25"
 
-	for {
-		// Read input from the user
-		fmt.Print("Enter your message (type 'exit' to quit): ")
-		message := readInput()
-
-		// Check if the user wants to exit
-		if message == "exit" {
-			break
-		}
-
-		// Send the user's message to the server
-		_, err := fmt.Fprintf(conn, "%s\n", message)
+		// Connect to the server
+		conn, err := net.Dial("tcp", serverAddress)
 		if err != nil {
-			fmt.Println("Error sending message:", err)
-			break
+			fmt.Println("Error connecting to the server:", err)
+			return
 		}
-	}
+		defer conn.Close()
 
-	fmt.Println("Connection closed.")
+		fmt.Println("Connected to the server.")
+
+		// Start a loop to read and write data from/to the server
+		go readFromServer(conn)
+
+		// List of commands to send to the server
+		commands := []string{
+			"EHLO " + domain,
+			"MAIL FROM: <example@example.com>",
+			"RCPT TO: <1@in.in>",
+			// Add more commands here as needed
+		}
+
+		for _, command := range commands {
+			// Print the selected command
+			fmt.Printf("Selected command: %s\n", command)
+
+			// Check if the user wants to exit
+			if command == "exit" {
+				break
+			}
+
+			// Send the command to the server
+			_, err := fmt.Fprintf(conn, "%s\n", command)
+			if err != nil {
+				fmt.Println("Error sending command:", err)
+				break
+			}
+
+			// Wait for a short time to allow the server to respond
+			// (adjust the duration as needed)
+			time.Sleep(time.Millisecond * 800)
+		}
+
+		fmt.Println("Connection closed.")
+	}
 }
 
 func readFromServer(conn net.Conn) {
