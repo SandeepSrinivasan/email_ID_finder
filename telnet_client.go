@@ -5,16 +5,30 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: go run main.go <domain_name>")
-		os.Exit(1)
-	}
 
-	domain := os.Args[1]
+	fmt.Println("enter the domain name:")
+	//domain := "fampay.in"
+	domain := readInput()
+
+	fmt.Println("enter the First name:")
+	//	FirstName := "Sandeep"
+	FirstName := readInput()
+
+	fmt.Println("enter the last name:")
+	// LastName := "Srinivasan"
+	LastName := readInput()
+
+	UserEmailaddress := toLowerCase(FirstName + "." + LastName + "@" + domain)
+	FirstNameEmailaddress := toLowerCase(FirstName + "@" + domain)
+	LastNameEmailaddress := toLowerCase(LastName + "@" + domain)
+	InitalNameEmailaddress := toLowerCase(FirstName + "." + string(LastName[0]) + "@" + domain)
+
+	fmt.Println("Connected String:", UserEmailaddress)
 
 	mxRecords, err := net.LookupMX(domain)
 	if err != nil {
@@ -43,13 +57,17 @@ func main() {
 		fmt.Println("Connected to the server.")
 
 		// Start a loop to read and write data from/to the server
-		go readFromServer(conn)
+		done := make(chan struct{})
+		go readFromServer(conn, done)
 
 		// List of commands to send to the server
 		commands := []string{
 			"EHLO " + domain,
 			"MAIL FROM: <example@example.com>",
-			"RCPT TO: <1@in.in>",
+			"RCPT TO: <" + UserEmailaddress + ">",
+			"RCPT TO: <" + FirstNameEmailaddress + ">",
+			"RCPT TO: <" + LastNameEmailaddress + ">",
+			"RCPT TO: <" + InitalNameEmailaddress + ">",
 			// Add more commands here as needed
 		}
 
@@ -71,14 +89,17 @@ func main() {
 
 			// Wait for a short time to allow the server to respond
 			// (adjust the duration as needed)
-			time.Sleep(time.Millisecond * 800)
+			time.Sleep(time.Millisecond * 1800)
 		}
+
+		// Wait for the readFromServer goroutine to complete
+		<-done
 
 		fmt.Println("Connection closed.")
 	}
 }
 
-func readFromServer(conn net.Conn) {
+func readFromServer(conn net.Conn, done chan struct{}) {
 	reader := bufio.NewReader(conn)
 	for {
 		message, err := reader.ReadString('\n')
@@ -86,12 +107,22 @@ func readFromServer(conn net.Conn) {
 			fmt.Println("Error reading from server:", err)
 			break
 		}
-		fmt.Println("Server:", message)
+		if strings.HasPrefix(message, "550-5.1.1 The email account that you tried to reach does not exist.") {
+			fmt.Println("Server:", message)
+			break
+		}
 	}
+
+	// Signal that the goroutine has completed its task
+	done <- struct{}{}
 }
 
 func readInput() string {
 	reader := bufio.NewReader(os.Stdin)
 	input, _ := reader.ReadString('\n')
 	return input[:len(input)-1] // Remove the newline character
+}
+
+func toLowerCase(str string) string {
+	return strings.ToLower(str)
 }

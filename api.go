@@ -20,7 +20,7 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Received data:")
-	fmt.Printf("Name: %s\n", requestData.Name)
+	fmt.Printf("Name %s\n", requestData.Name)
 
 	// Send a JSON response
 	response := map[string]string{
