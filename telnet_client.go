@@ -112,8 +112,12 @@ func readFromServer(conn net.Conn, done chan struct{}) {
 			fmt.Println("Error reading from server:", err)
 			break
 		}
-		if strings.HasPrefix(message, "550-5.1.1 The email account that you tried to reach does not exist.") {
-			fmt.Println("Server:", message)
+		if strings.HasPrefix(message, "550-5.1.1 ") {
+			fmt.Println("Email doesn't exist")
+		} else if strings.HasPrefix(message, "250 2.1.5 OK") {
+			fmt.Println("Email exists")
+		} else {
+			fmt.Println("Unknown response:", message)
 			break
 		}
 	}
