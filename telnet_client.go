@@ -19,12 +19,17 @@ func main() {
 	//	FirstName := "Sandeep"
 	FirstName := readInput()
 
+	fmt.Println("enter the middle name:")
+	//	FirstName := "Sandeep"
+	MiddleName := readInput()
+
 	fmt.Println("enter the last name:")
 	// LastName := "Srinivasan"
 	LastName := readInput()
 
 	UserEmailaddress := toLowerCase(FirstName + "." + LastName + "@" + domain)
 	FirstNameEmailaddress := toLowerCase(FirstName + "@" + domain)
+	MiddleNameEmailaddress := toLowerCase(MiddleName + "@" + domain)
 	LastNameEmailaddress := toLowerCase(LastName + "@" + domain)
 	InitalNameEmailaddress := toLowerCase(FirstName + "." + string(LastName[0]) + "@" + domain)
 
@@ -66,9 +71,9 @@ func main() {
 			"MAIL FROM: <example@example.com>",
 			"RCPT TO: <" + UserEmailaddress + ">",
 			"RCPT TO: <" + FirstNameEmailaddress + ">",
+			"RCPT TO: <" + MiddleNameEmailaddress + ">",
 			"RCPT TO: <" + LastNameEmailaddress + ">",
 			"RCPT TO: <" + InitalNameEmailaddress + ">",
-			// Add more commands here as needed
 		}
 
 		for _, command := range commands {
