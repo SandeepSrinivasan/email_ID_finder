@@ -71,9 +71,9 @@ func main() {
 			"MAIL FROM: <example@example.com>",
 			"RCPT TO: <" + UserEmailaddress + ">",
 			"RCPT TO: <" + FirstNameEmailaddress + ">",
+			"RCPT TO: <" + InitalNameEmailaddress + ">",
 			"RCPT TO: <" + MiddleNameEmailaddress + ">",
 			"RCPT TO: <" + LastNameEmailaddress + ">",
-			"RCPT TO: <" + InitalNameEmailaddress + ">",
 		}
 
 		for _, command := range commands {
@@ -97,28 +97,32 @@ func main() {
 			time.Sleep(time.Millisecond * 1800)
 		}
 
-		// Wait for the readFromServer goroutine to complete
-		<-done
-
 		fmt.Println("Connection closed.")
 	}
 }
 
 func readFromServer(conn net.Conn, done chan struct{}) {
 	reader := bufio.NewReader(conn)
+
+	// Initialize a flag to indicate if the response is received
+	emailStatusReceived := false
+
 	for {
 		message, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Error reading from server:", err)
 			break
 		}
-		if strings.HasPrefix(message, "550-5.1.1 ") {
-			fmt.Println("Email doesn't exist")
-		} else if strings.HasPrefix(message, "250 2.1.5 OK") {
-			fmt.Println("Email exists")
-		} else {
-			fmt.Println("Unknown response:", message)
-			break
+
+		emailStatusReceived = true
+
+		if emailStatusReceived {
+			// We have received the email status response, now handle it
+			if strings.Contains(message, "550-5.1.1 ") {
+				fmt.Println("Email doesn't exist")
+			} else if strings.Contains(message, "250 2.1.5 OK") {
+				fmt.Println("Email exists")
+			}
 		}
 	}
 
