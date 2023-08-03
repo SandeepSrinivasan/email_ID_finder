@@ -11,38 +11,40 @@ import (
 
 func main() {
 
-	fmt.Println("enter the domain name:")
-	//domain := "fampay.in"
-	domain := readInput()
+	// fmt.Println("enter the domain name:")
+	// //domain := "fampay.in"
+	// domain := data.FirstName
 
-	fmt.Println("enter the First name:")
-	//	FirstName := "Sandeep"
-	FirstName := readInput()
+	// fmt.Println("enter the First name:")
+	// //	FirstName := "Sandeep"
+	// FirstName := readInput()
 
-	fmt.Println("enter the middle name:")
-	//	FirstName := "Sandeep"
-	MiddleName := readInput()
+	// fmt.Println("enter the middle name:")
+	// //	FirstName := "Sandeep"
+	// MiddleName := readInput()
 
-	fmt.Println("enter the last name:")
-	// LastName := "Srinivasan"
-	LastName := readInput()
+	// fmt.Println("enter the last name:")
+	// // LastName := "Srinivasan"
+	// LastName := readInput()
 
-	UserEmailaddress := toLowerCase(FirstName + "." + LastName + "@" + domain)
-	FirstNameEmailaddress := toLowerCase(FirstName + "@" + domain)
-	MiddleNameEmailaddress := toLowerCase(MiddleName + "@" + domain)
-	LastNameEmailaddress := toLowerCase(LastName + "@" + domain)
-	InitalNameEmailaddress := toLowerCase(FirstName + "." + string(LastName[0]) + "@" + domain)
+	var data RequestData
+
+	UserEmailaddress := toLowerCase(data.FirstName + "." + data.LastName + "@" + data.DomainName)
+	FirstNameEmailaddress := toLowerCase(data.FirstName + "@" + data.DomainName)
+	MiddleNameEmailaddress := toLowerCase(data.MiddleName + "@" + data.DomainName)
+	LastNameEmailaddress := toLowerCase(data.LastName + "@" + data.DomainName)
+	InitalNameEmailaddress := toLowerCase(data.FirstName + "." + string(data.LastName[0]) + "@" + data.DomainName)
 
 	fmt.Println("Connected String:", UserEmailaddress)
 
-	mxRecords, err := net.LookupMX(domain)
+	mxRecords, err := net.LookupMX(data.DomainName)
 	if err != nil {
 		fmt.Println("Error performing MX record lookup:", err)
 		os.Exit(1)
 	}
 
 	if len(mxRecords) == 0 {
-		fmt.Printf("No MX records found for %s\n", domain)
+		fmt.Printf("No MX records found for %s\n", data.DomainName)
 	} else {
 		// Get the host of the first MX record
 		mailExchange := mxRecords[0].Host
@@ -67,7 +69,7 @@ func main() {
 
 		// List of commands to send to the server
 		commands := []string{
-			"EHLO " + domain,
+			"EHLO " + data.DomainName,
 			"MAIL FROM: <example@example.com>",
 			"RCPT TO: <" + UserEmailaddress + ">",
 			"RCPT TO: <" + FirstNameEmailaddress + ">",
@@ -138,4 +140,11 @@ func readInput() string {
 
 func toLowerCase(str string) string {
 	return strings.ToLower(str)
+}
+
+func processAPIInput(data RequestData) {
+	fmt.Println("First Name:", data.FirstName)
+	fmt.Println("Middle Name:", data.FirstName)
+	fmt.Println("Last Name:", data.LastName)
+	fmt.Println("Domain Name:", data.DomainName)
 }

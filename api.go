@@ -8,7 +8,10 @@ import (
 )
 
 type RequestData struct {
-	Name string `json:"Name"`
+	FirstName  string `json:"FName"`
+	LastName   string `json:"LName"`
+	MiddleName string `json:"MName"`
+	DomainName string `json:DName`
 }
 
 func handlePostRequest(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +23,7 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Received data:")
-	fmt.Printf("Name %s\n", requestData.Name)
+	fmt.Printf("FirstName %s\nMiddleName %s\nLastName %s\n", requestData.FirstName, requestData.MiddleName, requestData.LastName, requestData.DomainName)
 
 	// Send a JSON response
 	response := map[string]string{
