@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func main() {
+func Telnet(data RequestData) {
 
 	// fmt.Println("enter the domain name:")
 	// //domain := "fampay.in"
@@ -27,7 +27,7 @@ func main() {
 	// // LastName := "Srinivasan"
 	// LastName := readInput()
 
-	var data RequestData
+	// var data RequestData
 
 	UserEmailaddress := toLowerCase(data.FirstName + "." + data.LastName + "@" + data.DomainName)
 	FirstNameEmailaddress := toLowerCase(data.FirstName + "@" + data.DomainName)

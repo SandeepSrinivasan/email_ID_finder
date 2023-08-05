@@ -11,7 +11,7 @@ type RequestData struct {
 	FirstName  string `json:"FName"`
 	LastName   string `json:"LName"`
 	MiddleName string `json:"MName"`
-	DomainName string `json:DName`
+	DomainName string `json:"DoName"`
 }
 
 func handlePostRequest(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +23,13 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Received data:")
-	fmt.Printf("FirstName %s\nMiddleName %s\nLastName %s\n", requestData.FirstName, requestData.MiddleName, requestData.LastName, requestData.DomainName)
+	fmt.Printf("FirstName %s\nMiddleName %s\nLastName %s\nDomainName %s\n", requestData.FirstName, requestData.MiddleName, requestData.LastName, requestData.DomainName)
+
+	Telnet(requestData)
 
 	// Send a JSON response
 	response := map[string]string{
-		"message": "Request received successfully",
+		"FirstName": requestData.FirstName,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
