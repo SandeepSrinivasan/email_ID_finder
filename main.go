@@ -41,39 +41,24 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received data:")
 	fmt.Printf("FirstName %s\nMiddleName %s\nLastName %s\nDomainName %s\n", requestData.FirstName, requestData.MiddleName, requestData.LastName, requestData.DomainName)
 
-	Telnet(requestData)
+	emailID := Telnet(requestData)
 
-	// Send a JSON response
-	response := map[string]string{
-		"FirstName":  requestData.FirstName,
-		"MiddleName": requestData.MiddleName,
-		"LastName":   requestData.LastName,
-		"DomainName": requestData.DomainName,
+	if emailID != "" {
+		// Prepare the response with the email ID
+		response := map[string]string{
+			"EmailID": emailID,
+		}
+
+		// Set the response headers and encode the response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	} else {
+		// Return an error response if email ID doesn't exist
+		http.Error(w, "Email ID not found", http.StatusNotFound)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
 }
 
-func Telnet(data RequestData) {
-
-	// fmt.Println("enter the domain name:")
-	// //domain := "fampay.in"
-	// domain := data.FirstName
-
-	// fmt.Println("enter the First name:")
-	// //	FirstName := "Sandeep"
-	// FirstName := readInput()
-
-	// fmt.Println("enter the middle name:")
-	// //	FirstName := "Sandeep"
-	// MiddleName := readInput()
-
-	// fmt.Println("enter the last name:")
-	// // LastName := "Srinivasan"
-	// LastName := readInput()
-
-	// var data RequestData
-
+func Telnet(data RequestData) string {
 	UserEmailaddress := toLowerCase(data.FirstName + "." + data.LastName + "@" + data.DomainName)
 	FirstNameEmailaddress := toLowerCase(data.FirstName + "@" + data.DomainName)
 	MiddleNameEmailaddress := toLowerCase(data.MiddleName + "@" + data.DomainName)
@@ -90,7 +75,7 @@ func Telnet(data RequestData) {
 
 	if len(mxRecords) == 0 {
 		fmt.Printf("No MX records found for %s\n", data.DomainName)
-		return // Exit the function since there are no MX records
+		return "" // Exit the function since there are no MX records
 	} else {
 		// Get the host of the first MX record
 		mailExchange := mxRecords[0].Host
@@ -103,7 +88,7 @@ func Telnet(data RequestData) {
 		conn, err := net.Dial("tcp", serverAddress)
 		if err != nil {
 			fmt.Println("Error connecting to the server:", err)
-			return
+			return ""
 		}
 		defer conn.Close()
 
@@ -111,7 +96,7 @@ func Telnet(data RequestData) {
 
 		// Start a loop to read and write data from/to the server
 		done := make(chan struct{})
-		go readFromServer(conn, done)
+		go readFromServer(conn, done, UserEmailaddress)
 
 		// List of commands to send to the server
 		commands := []string{
@@ -147,9 +132,11 @@ func Telnet(data RequestData) {
 
 		fmt.Println("Connection closed.")
 	}
+
+	return UserEmailaddress
 }
 
-func readFromServer(conn net.Conn, done chan struct{}) {
+func readFromServer(conn net.Conn, done chan struct{}, userEmail string) string {
 	reader := bufio.NewReader(conn)
 
 	// Initialize a flag to indicate if the response is received
@@ -168,31 +155,20 @@ func readFromServer(conn net.Conn, done chan struct{}) {
 			// We have received the email status response, now handle it
 			if strings.Contains(message, "550-5.1.1 ") {
 				fmt.Println("Email doesn't exist")
+				return "" // Return an empty string if email doesn't exist
 			} else if strings.Contains(message, "250 2.1.5 OK") {
-				fmt.Println("Email exists")
+				return userEmail // Return the email ID if it exists
 			}
 		}
 	}
 
 	// Signal that the goroutine has completed its task
 	done <- struct{}{}
-}
-
-func readInput() string {
-	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadString('\n')
-	return input[:len(input)-1] // Remove the newline character
+	return "" // Return an empty string if email status is not received
 }
 
 func toLowerCase(str string) string {
 	return strings.ToLower(str)
-}
-
-func processAPIInput(data RequestData) {
-	fmt.Println("First Name:", data.FirstName)
-	fmt.Println("Middle Name:", data.FirstName)
-	fmt.Println("Last Name:", data.LastName)
-	fmt.Println("Domain Name:", data.DomainName)
 }
 
 func main() {
