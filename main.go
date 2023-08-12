@@ -38,9 +38,6 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Received data:")
-	fmt.Printf("FirstName %s\nMiddleName %s\nLastName %s\nDomainName %s\n", requestData.FirstName, requestData.MiddleName, requestData.LastName, requestData.DomainName)
-
 	emailID := Telnet(requestData)
 
 	if emailID != "" {
@@ -65,13 +62,13 @@ func Telnet(data RequestData) string {
 	LastNameEmailaddress := toLowerCase(data.LastName + "@" + data.DomainName)
 	InitalNameEmailaddress := toLowerCase(data.FirstName + "." + string(data.LastName[0]) + "@" + data.DomainName)
 
-	fmt.Println("Connected String:", UserEmailaddress)
-
 	mxRecords, err := net.LookupMX(data.DomainName)
 	if err != nil {
 		fmt.Println("Error performing MX record lookup:", err)
 		os.Exit(1)
 	}
+
+	emailID := ""
 
 	if len(mxRecords) == 0 {
 		fmt.Printf("No MX records found for %s\n", data.DomainName)
@@ -79,7 +76,6 @@ func Telnet(data RequestData) string {
 	} else {
 		// Get the host of the first MX record
 		mailExchange := mxRecords[0].Host
-		fmt.Printf("First MX record for %s\n", mailExchange)
 
 		// Combine the server IP and port to create the address
 		serverAddress := mailExchange + ":" + "25"
@@ -92,8 +88,6 @@ func Telnet(data RequestData) string {
 		}
 		defer conn.Close()
 
-		fmt.Println("Connected to the server.")
-
 		// Start a loop to read and write data from/to the server
 		done := make(chan struct{})
 		go readFromServer(conn, done, UserEmailaddress)
@@ -101,7 +95,7 @@ func Telnet(data RequestData) string {
 		// List of commands to send to the server
 		commands := []string{
 			"EHLO " + data.DomainName,
-			"MAIL FROM: <example@example.com>",
+			"MAIL FROM: <sandy@example.com>",
 			"RCPT TO: <" + UserEmailaddress + ">",
 			"RCPT TO: <" + FirstNameEmailaddress + ">",
 			"RCPT TO: <" + InitalNameEmailaddress + ">",
@@ -109,8 +103,7 @@ func Telnet(data RequestData) string {
 			"RCPT TO: <" + LastNameEmailaddress + ">",
 		}
 
-		for _, command := range commands {
-			// Print the selected command
+		for _, command := range commands { // Print the selected command
 			fmt.Printf("Selected command: %s\n", command)
 
 			// Check if the user wants to exit
@@ -125,19 +118,19 @@ func Telnet(data RequestData) string {
 				break
 			}
 
-			// Wait for a short time to allow the server to respond
-			// (adjust the duration as needed)
-			time.Sleep(time.Millisecond * 1800)
+			time.Sleep(time.Millisecond * 180)
 		}
 
 		fmt.Println("Connection closed.")
 	}
 
-	return UserEmailaddress
+	return emailID
 }
 
 func readFromServer(conn net.Conn, done chan struct{}, userEmail string) string {
 	reader := bufio.NewReader(conn)
+
+	emailID := ""
 
 	// Initialize a flag to indicate if the response is received
 	emailStatusReceived := false
@@ -149,22 +142,23 @@ func readFromServer(conn net.Conn, done chan struct{}, userEmail string) string 
 			break
 		}
 
-		emailStatusReceived = true
+		// ... (rest of the code remains the same)
+
+		if strings.Contains(message, "550-5.1.1 ") {
+			fmt.Println("Email doesn't exist")
+			emailID = "" // Set emailID to empty string if email doesn't exist
+		} else if strings.Contains(message, "250 2.1.5 OK") {
+			emailID = userEmail // Set emailID to user's email if it exists
+		}
 
 		if emailStatusReceived {
-			// We have received the email status response, now handle it
-			if strings.Contains(message, "550-5.1.1 ") {
-				fmt.Println("Email doesn't exist")
-				return "" // Return an empty string if email doesn't exist
-			} else if strings.Contains(message, "250 2.1.5 OK") {
-				return userEmail // Return the email ID if it exists
-			}
+			break
 		}
 	}
 
 	// Signal that the goroutine has completed its task
 	done <- struct{}{}
-	return "" // Return an empty string if email status is not received
+	return emailID // Return an empty string if email status is not received
 }
 
 func toLowerCase(str string) string {
