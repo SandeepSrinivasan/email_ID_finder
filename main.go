@@ -103,15 +103,13 @@ func Telnet(data RequestData) string {
 			"RCPT TO: <" + LastNameEmailaddress + ">",
 		}
 
-		for _, command := range commands { // Print the selected command
+		for _, command := range commands {
 			fmt.Printf("Selected command: %s\n", command)
 
-			// Check if the user wants to exit
 			if command == "exit" {
 				break
 			}
 
-			// Send the command to the server
 			_, err := fmt.Fprintf(conn, "%s\n", command)
 			if err != nil {
 				fmt.Println("Error sending command:", err)
@@ -127,12 +125,10 @@ func Telnet(data RequestData) string {
 	return emailID
 }
 
-func readFromServer(conn net.Conn, done chan struct{}, userEmail string) string {
+func readFromServer(conn net.Conn, done chan struct{}, userEmail1 string) string {
 	reader := bufio.NewReader(conn)
 
 	emailID := ""
-
-	// Initialize a flag to indicate if the response is received
 	emailStatusReceived := false
 
 	for {
@@ -142,13 +138,11 @@ func readFromServer(conn net.Conn, done chan struct{}, userEmail string) string 
 			break
 		}
 
-		// ... (rest of the code remains the same)
-
 		if strings.Contains(message, "550-5.1.1 ") {
 			fmt.Println("Email doesn't exist")
-			emailID = "" // Set emailID to empty string if email doesn't exist
+			emailID = ""
 		} else if strings.Contains(message, "250 2.1.5 OK") {
-			emailID = userEmail // Set emailID to user's email if it exists
+			emailID = userEmail1
 		}
 
 		if emailStatusReceived {
@@ -156,9 +150,8 @@ func readFromServer(conn net.Conn, done chan struct{}, userEmail string) string 
 		}
 	}
 
-	// Signal that the goroutine has completed its task
 	done <- struct{}{}
-	return emailID // Return an empty string if email status is not received
+	return emailID
 }
 
 func toLowerCase(str string) string {
@@ -168,7 +161,7 @@ func toLowerCase(str string) string {
 func main() {
 	http.HandleFunc("/email", handlePostRequest)
 
-	port := "8080" // Choose a port number for your API
+	port := "8080"
 	fmt.Printf("Starting server on port %s...\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
