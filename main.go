@@ -16,7 +16,7 @@ type RequestData struct {
 	FirstName  string `json:"FName"`
 	LastName   string `json:"LName"`
 	MiddleName string `json:"MName"`
-	DomainName string `json:"DoName"`
+	DomainName string `json:"DName"`
 }
 
 func handlePostRequest(w http.ResponseWriter, r *http.Request) {
